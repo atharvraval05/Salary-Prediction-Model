@@ -1,0 +1,1751 @@
+<!DOCTYPE html>
+<html lang="en" style="scroll-behavior: smooth;">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Salary Predictor — Interactive ML Regression</title>
+  
+  <!-- SEO Tags -->
+  <meta name="description" content="An interactive, real-time simple linear regression ML visualizer for predicting salary based on experience. Custom built with premium pastel aesthetics.">
+  
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+  
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  
+  <style>
+    /* -------------------------------------------------------------
+     * Custom Stylesheet for Salary Predictor (Pastel Glassmorphism)
+     * ------------------------------------------------------------- */
+
+    :root {
+      --font-headers: 'Space Grotesk', sans-serif;
+      --font-body: 'Outfit', sans-serif;
+
+      /* Premium Pastel Palette */
+      --bg-gradient: linear-gradient(135deg, #f5f3ff 0%, #ecfeff 50%, #fff7ed 100%);
+      --glass-bg: rgba(255, 255, 255, 0.55);
+      --glass-border: rgba(255, 255, 255, 0.7);
+      --glass-shadow: 0 10px 40px -10px rgba(120, 119, 198, 0.12);
+      
+      --primary: #6366f1;       /* Indigo */
+      --primary-light: #e0e7ff;
+      --secondary: #0d9488;     /* Teal */
+      --secondary-light: #ccfbf1;
+      --accent: #f43f5e;        /* Rose */
+      --accent-light: #ffe4e6;
+      
+      --text-main: #0f172a;     /* Slate 900 */
+      --text-muted: #475569;    /* Slate 600 */
+      --border-color: rgba(226, 232, 240, 0.9);
+      
+      --border-radius-lg: 20px;
+      --border-radius-md: 14px;
+      --border-radius-sm: 8px;
+      
+      --transition-fast: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+      --transition-medium: 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    /* Base Styles */
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    html, body {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      font-family: var(--font-body);
+      color: var(--text-main);
+      background: var(--bg-gradient);
+      min-height: 100vh;
+      position: relative;
+      overflow-x: hidden;
+      line-height: 1.5;
+      display: flex;
+      justify-content: center;
+      align-items: flex-start;
+      padding: 2rem 1.5rem;
+    }
+
+    /* Ambient Floating Blobs */
+    .blob-bg {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(120px);
+      z-index: -1;
+      opacity: 0.55;
+      pointer-events: none;
+    }
+
+    .blob-purple {
+      top: -10%;
+      left: -5%;
+      width: 45vw;
+      height: 45vw;
+      background: radial-gradient(circle, rgba(167, 139, 250, 0.35) 0%, rgba(255, 255, 255, 0) 70%);
+      animation: float-slow 25s infinite alternate ease-in-out;
+    }
+
+    .blob-teal {
+      bottom: -5%;
+      right: -5%;
+      width: 50vw;
+      height: 50vw;
+      background: radial-gradient(circle, rgba(45, 212, 191, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
+      animation: float-slow 20s infinite alternate-reverse ease-in-out;
+    }
+
+    .blob-orange {
+      top: 35%;
+      left: 35%;
+      width: 35vw;
+      height: 35vw;
+      background: radial-gradient(circle, rgba(253, 186, 116, 0.25) 0%, rgba(255, 255, 255, 0) 70%);
+      animation: float-slow 30s infinite alternate ease-in-out;
+    }
+
+    @keyframes float-slow {
+      0% { transform: translate(0, 0) scale(1); }
+      50% { transform: translate(5%, 7%) scale(1.08); }
+      100% { transform: translate(-3%, -5%) scale(0.92); }
+    }
+
+    /* App Container Layout */
+    .app-container {
+      width: 100%;
+      max-width: 1200px;
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+      z-index: 1;
+    }
+
+    /* Header */
+    .app-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1.25rem 2rem;
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--glass-shadow);
+    }
+
+    .header-logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .header-icon-svg {
+      width: 32px;
+      height: 32px;
+      stroke: var(--primary);
+      display: block;
+    }
+
+    .header-text h1 {
+      font-family: var(--font-headers);
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: var(--text-main);
+      letter-spacing: -0.03em;
+      line-height: 1.1;
+    }
+
+    .header-text p {
+      font-size: 0.85rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+
+    .model-badge {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.4rem 1rem;
+      background: white;
+      border-radius: 50px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      border: 1px solid var(--border-color);
+      box-shadow: 0 2px 8 rgba(0,0,0,0.01);
+    }
+
+    .pulse-dot {
+      width: 8px;
+      height: 8px;
+      background-color: #10b981;
+      border-radius: 50%;
+      display: inline-block;
+      box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.6);
+      animation: pulse-ring 2s infinite;
+    }
+
+    @keyframes pulse-ring {
+      0% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.5);
+      }
+      70% {
+        transform: scale(1);
+        box-shadow: 0 0 0 6px rgba(16, 185, 129, 0);
+      }
+      100% {
+        transform: scale(0.95);
+        box-shadow: 0 0 0 0 rgba(16, 185, 129, 0);
+      }
+    }
+
+    /* Sidebar & Content Columns (Structured Layout) */
+    .dashboard-grid {
+      display: grid;
+      grid-template-columns: 1fr 1.6fr;
+      gap: 1.5rem;
+      align-items: start;
+    }
+
+    .dashboard-sidebar {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    .dashboard-content {
+      display: flex;
+      flex-direction: column;
+      gap: 1.5rem;
+    }
+
+    /* Cards & Glassmorphic Panels */
+    .card {
+      background: var(--glass-bg);
+      backdrop-filter: blur(20px);
+      -webkit-backdrop-filter: blur(20px);
+      border: 1px solid var(--glass-border);
+      border-radius: var(--border-radius-lg);
+      box-shadow: var(--glass-shadow);
+      padding: 1.5rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1.25rem;
+      transition: transform var(--transition-medium), box-shadow var(--transition-medium);
+    }
+
+    .card:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 15px 45px -10px rgba(120, 119, 198, 0.16);
+    }
+
+    .card-header {
+      display: flex;
+      align-items: center;
+      gap: 0.65rem;
+    }
+
+    .card-header h2 {
+      font-family: var(--font-headers);
+      font-size: 1.2rem;
+      font-weight: 700;
+      letter-spacing: -0.02em;
+      color: var(--text-main);
+    }
+
+    .card-icon {
+      background: white;
+      width: 36px;
+      height: 36px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: var(--border-radius-md);
+      box-shadow: 0 4px 10px rgba(0,0,0,0.02);
+      border: 1px solid var(--border-color);
+    }
+
+    .card-icon-svg {
+      width: 18px;
+      height: 18px;
+      stroke: var(--primary);
+      display: block;
+    }
+
+    /* 1. Interactive Predictor (Hero Card) */
+    .sandbox-card {
+      background: rgba(255, 255, 255, 0.65);
+    }
+
+    .salary-display-container {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 1.5rem 1rem;
+      background: linear-gradient(135deg, var(--primary-light) 0%, rgba(255,255,255,0.75) 100%);
+      border-radius: var(--border-radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      text-align: center;
+    }
+
+    .salary-label {
+      font-size: 0.7rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--primary);
+      margin-bottom: 0.25rem;
+    }
+
+    .salary-value-wrapper {
+      display: flex;
+      align-items: flex-start;
+      justify-content: center;
+      font-weight: 700;
+      color: var(--text-main);
+    }
+
+    .currency-symbol {
+      font-size: 1.5rem;
+      margin-top: 0.15rem;
+      margin-right: 0.15rem;
+      color: var(--primary);
+    }
+
+    .salary-number {
+      font-size: 2.8rem;
+      letter-spacing: -0.04em;
+      line-height: 1;
+      background: linear-gradient(135deg, var(--text-main) 0%, #4338ca 100%);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-family: var(--font-body);
+    }
+
+    .prediction-info {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      margin-top: 0.4rem;
+      font-weight: 500;
+    }
+
+    /* Custom Slider & Synchronized Year Input */
+    .control-group {
+      display: flex;
+      flex-direction: column;
+      gap: 0.4rem;
+    }
+
+    .slider-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .control-label {
+      font-size: 0.9rem;
+      font-weight: 600;
+      color: var(--text-main);
+    }
+
+    .input-with-unit {
+      display: flex;
+      align-items: center;
+      background: white;
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      padding: 0.2rem 0.6rem 0.2rem 0.75rem;
+      box-shadow: 0 1px 4px rgba(0,0,0,0.02);
+      transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    .input-with-unit:focus-within {
+      border-color: var(--primary);
+      box-shadow: 0 0 0 2px var(--primary-light);
+    }
+
+    #exp-numeric-input {
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 700;
+      color: #4f46e5;
+      border: none;
+      background: transparent;
+      outline: none;
+      width: 45px;
+      text-align: right;
+      -moz-appearance: textfield;
+    }
+
+    #exp-numeric-input::-webkit-outer-spin-button,
+    #exp-numeric-input::-webkit-inner-spin-button {
+      -webkit-appearance: none;
+      margin: 0;
+    }
+
+    .input-unit {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      margin-left: 0.15rem;
+    }
+
+    #exp-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 8px;
+      border-radius: 10px;
+      background: #cbd5e1;
+      outline: none;
+      cursor: pointer;
+      margin: 8px 0;
+    }
+
+    #exp-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 20px;
+      height: 20px;
+      border-radius: 50%;
+      background: white;
+      border: 4px solid var(--primary);
+      box-shadow: 0 2px 8px rgba(79, 70, 229, 0.2);
+      transition: transform var(--transition-fast);
+    }
+
+    #exp-slider::-webkit-slider-thumb:hover {
+      transform: scale(1.15);
+    }
+
+    .slider-ticks {
+      display: flex;
+      justify-content: space-between;
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      padding: 0 0.2rem;
+    }
+
+    .quick-actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+
+    /* Buttons */
+    .btn {
+      flex: 1;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 0.65rem 1rem;
+      border: 1px solid transparent;
+      border-radius: var(--border-radius-md);
+      cursor: pointer;
+      transition: all var(--transition-fast);
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+      box-shadow: 0 2px 10px rgba(99, 102, 241, 0.2);
+    }
+
+    .btn-primary:hover {
+      background: #4f46e5;
+      box-shadow: 0 4px 12px rgba(99, 102, 241, 0.3);
+    }
+
+    .btn-secondary {
+      background: white;
+      color: var(--text-main);
+      border-color: var(--border-color);
+    }
+
+    .btn-secondary:hover {
+      background: #f1f5f9;
+      border-color: var(--text-muted);
+    }
+
+    .btn-text {
+      background: none;
+      border: none;
+      color: var(--text-muted);
+      font-family: var(--font-body);
+      font-weight: 500;
+      font-size: 0.8rem;
+      cursor: pointer;
+      text-decoration: underline;
+    }
+
+    .btn-text:hover {
+      color: var(--primary);
+    }
+
+    /* 2. Chart Card */
+    .chart-card {
+      min-height: 400px;
+    }
+
+    .chart-container {
+      position: relative;
+      flex: 1;
+      width: 100%;
+      min-height: 320px;
+    }
+
+    /* Preset Dataset Dropdown */
+    .preset-selector-container {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-left: auto;
+    }
+
+    .preset-label {
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+    }
+
+    .select-dropdown {
+      font-family: var(--font-body);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-main);
+      background-color: white;
+      border: 1px solid var(--border-color);
+      border-radius: 50px;
+      padding: 0.35rem 1.5rem 0.35rem 0.75rem;
+      outline: none;
+      cursor: pointer;
+      transition: border-color var(--transition-fast);
+      appearance: none;
+      background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='%23475569' stroke-width='3' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+      background-repeat: no-repeat;
+      background-position: right 8px center;
+    }
+
+    .select-dropdown:hover {
+      border-color: var(--text-muted);
+      background-color: #f8fafc;
+    }
+
+    .select-dropdown:focus {
+      border-color: var(--primary);
+    }
+
+    .info-icon-svg {
+      width: 16px;
+      height: 16px;
+      stroke: var(--text-muted);
+      display: block;
+    }
+
+    .tooltip-trigger {
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 4px;
+      border-radius: 50%;
+      transition: background-color var(--transition-fast);
+    }
+
+    .tooltip-trigger:hover {
+      background-color: rgba(0, 0, 0, 0.05);
+    }
+
+    /* 3. Dataset Card Table */
+    .table-container {
+      max-height: 230px;
+      overflow-y: auto;
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+      background: white;
+    }
+
+    .table-container::-webkit-scrollbar {
+      width: 8px;
+    }
+
+    .table-container::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 0 10px 10px 0;
+    }
+
+    .table-container::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 10px;
+    }
+
+    .table-container::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      text-align: left;
+    }
+
+    thead {
+      position: sticky;
+      top: 0;
+      background: #f8fafc;
+      z-index: 2;
+      box-shadow: 0 1px 0 var(--border-color);
+    }
+
+    th {
+      font-family: var(--font-headers);
+      font-size: 0.8rem;
+      font-weight: 600;
+      color: var(--text-muted);
+      padding: 0.65rem 0.85rem;
+      letter-spacing: 0.05em;
+    }
+
+    td {
+      font-size: 0.9rem;
+      padding: 0.5rem 0.85rem;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    tbody tr:last-child td {
+      border-bottom: none;
+    }
+
+    tbody tr {
+      transition: background-color var(--transition-fast);
+    }
+
+    tbody tr:hover {
+      background-color: #f1f5f9;
+    }
+
+    tbody td input[type="number"] {
+      font-family: var(--font-body);
+      font-size: 0.9rem;
+      font-weight: 500;
+      color: var(--text-main);
+      border-radius: var(--border-radius-sm);
+      padding: 3px 6px;
+      border: none;
+      background: transparent;
+      transition: background-color var(--transition-fast), box-shadow var(--transition-fast);
+    }
+
+    tbody td input[type="number"]:hover {
+      background-color: #f8fafc;
+      box-shadow: 0 0 0 1px #cbd5e1;
+    }
+
+    tbody td input[type="number"]:focus {
+      background-color: white;
+      box-shadow: 0 0 0 2px var(--primary-light);
+      outline: none;
+    }
+
+    /* Inline Action buttons */
+    .btn-delete {
+      background: none;
+      border: none;
+      cursor: pointer;
+      width: 24px;
+      height: 24px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      border-radius: 50%;
+      margin: 0 auto;
+      transition: background-color var(--transition-fast);
+    }
+
+    .btn-delete:hover {
+      background-color: var(--accent-light);
+    }
+
+    .trash-icon-svg {
+      width: 14px;
+      height: 14px;
+      stroke: var(--text-muted);
+      transition: stroke var(--transition-fast);
+    }
+
+    .btn-delete:hover .trash-icon-svg {
+      stroke: var(--accent);
+    }
+
+    /* Form row for adding data */
+    .add-data-row {
+      display: flex;
+      gap: 0.5rem;
+      background: white;
+      padding: 0.5rem 0.75rem;
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+    }
+
+    .add-data-row input {
+      flex: 1;
+      font-family: var(--font-body);
+      font-size: 0.85rem;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid var(--border-color);
+      border-radius: var(--border-radius-sm);
+      outline: none;
+      transition: border-color var(--transition-fast);
+    }
+
+    .add-data-row input:focus {
+      border-color: var(--primary);
+    }
+
+    #btn-add {
+      flex: 0 0 auto;
+      padding: 0.5rem 1.25rem;
+      border-radius: var(--border-radius-sm);
+    }
+
+    /* 4. Model Insights Card */
+    .equation-box {
+      background: linear-gradient(135deg, var(--secondary-light) 0%, rgba(255,255,255,0.75) 100%);
+      padding: 1rem;
+      border-radius: var(--border-radius-md);
+      border: 1px solid rgba(255, 255, 255, 0.8);
+      text-align: center;
+    }
+
+    .formula-title {
+      font-size: 0.65rem;
+      font-weight: 700;
+      letter-spacing: 0.1em;
+      color: var(--secondary);
+      margin-bottom: 0.25rem;
+    }
+
+    .formula-display {
+      font-family: var(--font-headers);
+      font-size: 1.05rem;
+      font-weight: 600;
+      color: var(--text-main);
+      word-break: break-all;
+    }
+
+    .formula-display .highlight {
+      color: var(--secondary);
+      font-weight: 700;
+    }
+
+    .metrics-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 0.65rem;
+    }
+
+    .metric-tile {
+      background: white;
+      padding: 0.75rem;
+      border-radius: var(--border-radius-md);
+      border: 1px solid var(--border-color);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .metric-title {
+      font-size: 0.7rem;
+      color: var(--text-muted);
+      font-weight: 500;
+      margin-bottom: 0.15rem;
+    }
+
+    .metric-val {
+      font-family: var(--font-headers);
+      font-size: 1.15rem;
+      font-weight: 700;
+      color: var(--text-main);
+      line-height: 1.1;
+    }
+
+    .metric-meta {
+      font-size: 0.65rem;
+      color: var(--text-muted);
+      margin-top: auto;
+    }
+
+    .insights-summary {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      line-height: 1.45;
+      background: #f8fafc;
+      padding: 0.75rem;
+      border-radius: var(--border-radius-md);
+      border-left: 4px solid var(--accent);
+    }
+
+    .insights-summary strong {
+      color: var(--text-main);
+    }
+
+    /* Footer Section */
+    .app-footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 0.85rem 2rem;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-radius: var(--border-radius-lg);
+      background: rgba(255,255,255,0.25);
+      border: 1px solid rgba(255,255,255,0.4);
+    }
+
+    /* Responsive Breakpoints */
+    @media (max-width: 900px) {
+      .dashboard-grid {
+        grid-template-columns: 1fr;
+      }
+    }
+
+    @media (max-width: 600px) {
+      body {
+        padding: 1rem 0.5rem;
+      }
+      
+      .app-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.75rem;
+        padding: 1rem;
+      }
+      
+      .card {
+        padding: 1.1rem;
+      }
+      
+      .salary-number {
+        font-size: 2.2rem;
+      }
+      
+      .metrics-grid {
+        grid-template-columns: 1fr;
+      }
+      
+      .app-footer {
+        flex-direction: column;
+        gap: 0.5rem;
+        text-align: center;
+        padding: 1rem;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Ambient Gradient Background Blobs -->
+  <div class="blob-bg blob-purple"></div>
+  <div class="blob-bg blob-teal"></div>
+  <div class="blob-bg blob-orange"></div>
+
+  <div class="app-container">
+    <!-- Header -->
+    <header class="app-header">
+      <div class="header-logo">
+        <span class="icon">
+          <svg class="header-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="2" y="7" width="20" height="14" rx="2" ry="2"></rect>
+            <path d="M16 21V5a2 2 0 0 0-2-2h-4a2 2 0 0 0-2 2v16"></path>
+          </svg>
+        </span>
+        <div class="header-text">
+          <h1>Salary Predictor</h1>
+          <p>Simple Linear Regression Interactive Sandbox</p>
+        </div>
+      </div>
+      <div class="model-badge">
+        <span class="pulse-dot"></span>
+        <span id="model-status">Active ML Engine</span>
+      </div>
+    </header>
+
+    <!-- Main Dashboard Grid -->
+    <main class="dashboard-grid">
+      
+      <!-- LEFT SIDEBAR: Controls & Insights -->
+      <div class="dashboard-sidebar">
+        
+        <!-- Prediction Sandbox Card -->
+        <section class="card sandbox-card glass-panel">
+          <div class="card-header">
+            <span class="card-icon">
+              <svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="4" y1="21" x2="4" y1="14"></line>
+                <line x1="4" y1="10" x2="4" y1="3"></line>
+                <line x1="12" y1="21" x2="12" y1="12"></line>
+                <line x1="12" y1="8" x2="12" y1="3"></line>
+                <line x1="20" y1="21" x2="20" y1="16"></line>
+                <line x1="20" y1="12" x2="20" y1="3"></line>
+                <line x1="1" y1="14" x2="7" y1="14"></line>
+                <line x1="9" y1="8" x2="15" y1="8"></line>
+                <line x1="17" y1="16" x2="23" y1="16"></line>
+              </svg>
+            </span>
+            <h2>Interactive Predictor</h2>
+          </div>
+          
+          <div class="salary-display-container">
+            <p class="salary-label">EXPECTED SALARY</p>
+            <div class="salary-value-wrapper">
+              <span class="currency-symbol">₹</span>
+              <span id="predicted-salary" class="salary-number">71,154.57</span>
+            </div>
+            <p class="prediction-info" id="prediction-info-text">At 4.0 years of experience</p>
+          </div>
+
+          <div class="control-group">
+            <div class="slider-header">
+              <label for="exp-numeric-input" class="control-label">Years of Experience</label>
+              <div class="input-with-unit">
+                <input type="number" id="exp-numeric-input" min="0" max="30" step="0.1" value="4.0">
+                <span class="input-unit">Yrs</span>
+              </div>
+            </div>
+            <input type="range" id="exp-slider" min="0" max="15" step="0.1" value="4">
+            <div class="slider-ticks">
+              <span>0y</span>
+              <span>3y</span>
+              <span>6y</span>
+              <span>9y</span>
+              <span>12y</span>
+              <span>15y</span>
+            </div>
+          </div>
+
+          <div class="quick-actions">
+            <button id="btn-reset" class="btn btn-secondary">Reset Slider</button>
+            <button id="btn-average" class="btn btn-secondary">Use Mean Exp</button>
+          </div>
+        </section>
+
+        <!-- Model Insights Card -->
+        <section class="card stats-card glass-panel">
+          <div class="card-header">
+            <span class="card-icon">
+              <svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="18" cy="5" r="3"></circle>
+                <circle cx="6" cy="12" r="3"></circle>
+                <circle cx="18" cy="19" r="3"></circle>
+                <line x1="8.59" y1="13.51" x2="15.42" y2="17.49"></line>
+                <line x1="15.41" y1="6.51" x2="8.59" y2="10.49"></line>
+              </svg>
+            </span>
+            <h2>Model Insights</h2>
+          </div>
+          
+          <div class="equation-box">
+            <p class="formula-title">LEARNED REGRESSION EQUATION</p>
+            <div class="formula-display" id="formula-math">
+              Salary = <span class="highlight">m</span> × Exp + <span class="highlight">c</span>
+            </div>
+          </div>
+
+          <div class="metrics-grid">
+            <div class="metric-tile">
+              <span class="metric-title">Goodness of Fit (R²)</span>
+              <span class="metric-val" id="r2-display">0.9600</span>
+              <span class="metric-meta" id="r2-desc">Excellent fit</span>
+            </div>
+            <div class="metric-tile">
+              <span class="metric-title">Slope (Base Growth)</span>
+              <span class="metric-val" id="slope-display">₹12,789</span>
+              <span class="metric-meta">Per year of exp</span>
+            </div>
+            <div class="metric-tile">
+              <span class="metric-title">Intercept (Base Pay)</span>
+              <span class="metric-val" id="intercept-display">₹19,998</span>
+              <span class="metric-meta">At zero exp</span>
+            </div>
+            <div class="metric-tile">
+              <span class="metric-title">Total Samples (N)</span>
+              <span class="metric-val" id="samples-display">16</span>
+              <span class="metric-meta">Data points</span>
+            </div>
+          </div>
+
+          <div class="insights-summary" id="insights-text">
+            <!-- Text generated dynamically based on regression results -->
+          </div>
+        </section>
+      </div>
+
+      <!-- RIGHT CONTENT: Chart & Table -->
+      <div class="dashboard-content">
+        
+        <!-- Regression Chart Card -->
+        <section class="card chart-card glass-panel">
+          <div class="card-header">
+            <span class="card-icon">
+              <svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <line x1="18" y1="20" x2="18" y1="10"></line>
+                <line x1="12" y1="20" x2="12" y1="4"></line>
+                <line x1="6" y1="20" x2="6" y1="14"></line>
+              </svg>
+            </span>
+            <h2>Regression Chart</h2>
+          </div>
+          <div class="chart-container">
+            <canvas id="regressionChart"></canvas>
+          </div>
+        </section>
+
+        <!-- Dataset Hub Card -->
+        <section class="card dataset-card glass-panel">
+          <div class="card-header">
+            <span class="card-icon">
+              <svg class="card-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M12 22c5.523 0 10-2.239 10-5V5c0-2.761-4.477-5-10-5S2 2.239 2 5v12c0 2.761 4.477 5 10 5z"></path>
+                <path d="M22 5c0 2.761-4.477 5-10 5S2 7.761 2 5"></path>
+                <path d="M2 10c0 2.761 4.477 5 10 5s10-2.239 10-5"></path>
+                <path d="M2 15c0 2.761 4.477 5 10 5s10-2.239 10-5"></path>
+              </svg>
+            </span>
+            <h2>Training Dataset</h2>
+            <div class="preset-selector-container">
+              <label for="dataset-preset" class="preset-label">Profile:</label>
+              <select id="dataset-preset" class="select-dropdown">
+                <option value="corporate">Standard Tech Industry</option>
+                <option value="tech">High-Growth Startups (Exponential)</option>
+                <option value="noisy">Volatile Consulting (High Noise)</option>
+              </select>
+            </div>
+            <span class="tooltip-trigger" id="table-info-trigger">
+              <svg class="info-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y1="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+            </span>
+          </div>
+          
+          <div class="table-container">
+            <table id="dataset-table">
+              <thead>
+                <tr>
+                  <th>Years of Exp (X)</th>
+                  <th>Salary in ₹ (Y)</th>
+                  <th style="width: 80px; text-align: center;">Action</th>
+                </tr>
+              </thead>
+              <tbody id="table-body">
+                <!-- JS will dynamically populate rows -->
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Add Data Form -->
+          <form id="add-data-form" class="add-data-row">
+            <input type="number" id="new-exp" placeholder="Exp (e.g. 5.5)" step="0.1" min="0" max="30" required>
+            <input type="number" id="new-salary" placeholder="Salary (₹)" min="0" required>
+            <button type="submit" class="btn btn-primary" id="btn-add">Add Point</button>
+          </form>
+        </section>
+      </div>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="app-footer">
+      <p>Designed with premium pastel aesthetics & dynamic reactive ML equations.</p>
+      <button id="btn-restore-defaults" class="btn-text">Reset to Default Dataset</button>
+    </footer>
+  </div>
+
+  <!-- Custom Scripts -->
+  <script>
+    /**
+     * -------------------------------------------------------------
+     * Salary Predictor - Real-Time ML Regression Engine
+     * -------------------------------------------------------------
+     */
+
+    // Enhanced high-density datasets with high precision (16 points each)
+    const PRESETS = {
+      corporate: [
+        { x: 1.0, y: 25000 },
+        { x: 1.5, y: 35000 },
+        { x: 2.0, y: 48000 },
+        { x: 2.5, y: 42000 },
+        { x: 3.0, y: 68000 },
+        { x: 3.5, y: 58000 },
+        { x: 4.0, y: 82000 },
+        { x: 4.5, y: 74000 },
+        { x: 5.0, y: 89000 },
+        { x: 5.5, y: 98000 },
+        { x: 6.0, y: 91000 },
+        { x: 6.5, y: 105000 },
+        { x: 7.0, y: 118000 },
+        { x: 8.0, y: 114000 },
+        { x: 9.0, y: 142000 },
+        { x: 10.0, y: 155000 }
+      ],
+      tech: [
+        { x: 1.0, y: 58000 },
+        { x: 1.5, y: 52000 },
+        { x: 2.0, y: 68000 },
+        { x: 2.5, y: 61000 },
+        { x: 3.0, y: 82000 },
+        { x: 3.5, y: 74000 },
+        { x: 4.0, y: 105000 },
+        { x: 4.5, y: 95000 },
+        { x: 5.0, y: 135000 },
+        { x: 5.5, y: 122000 },
+        { x: 6.0, y: 185000 },
+        { x: 6.5, y: 165000 },
+        { x: 7.0, y: 245000 },
+        { x: 8.0, y: 220000 },
+        { x: 9.0, y: 430000 },
+        { x: 10.0, y: 395000 }
+      ],
+      noisy: [
+        { x: 1.0, y: 45000 },
+        { x: 1.5, y: 20000 },
+        { x: 2.0, y: 65000 },
+        { x: 2.5, y: 95000 },
+        { x: 3.0, y: 32000 },
+        { x: 3.5, y: 105000 },
+        { x: 4.0, y: 50000 },
+        { x: 4.5, y: 125000 },
+        { x: 5.0, y: 40000 },
+        { x: 5.5, y: 140000 },
+        { x: 6.0, y: 62000 },
+        { x: 6.5, y: 155000 },
+        { x: 7.0, y: 68000 },
+        { x: 8.0, y: 175000 },
+        { x: 9.0, y: 75000 },
+        { x: 10.0, y: 195000 }
+      ]
+    };
+
+    // App State
+    let dataset = JSON.parse(JSON.stringify(PRESETS.corporate));
+    let model = { m: 0, c: 0, r2: 0, avgX: 0, avgY: 0, n: 0 };
+    let currentExpInput = 4.0;
+    let chart = null;
+
+    // DOM Elements
+    const expSlider = document.getElementById('exp-slider');
+    const expNumericInput = document.getElementById('exp-numeric-input');
+    const predictedSalaryDisplay = document.getElementById('predicted-salary');
+    const predictionInfoText = document.getElementById('prediction-info-text');
+    const formulaMath = document.getElementById('formula-math');
+    const r2Display = document.getElementById('r2-display');
+    const r2Desc = document.getElementById('r2-desc');
+    const slopeDisplay = document.getElementById('slope-display');
+    const interceptDisplay = document.getElementById('intercept-display');
+    const samplesDisplay = document.getElementById('samples-display');
+    const insightsText = document.getElementById('insights-text');
+    const tableBody = document.getElementById('table-body');
+    const addDataForm = document.getElementById('add-data-form');
+    const btnReset = document.getElementById('btn-reset');
+    const btnAverage = document.getElementById('btn-average');
+    const btnRestoreDefaults = document.getElementById('btn-restore-defaults');
+    const presetSelector = document.getElementById('dataset-preset');
+
+    /**
+     * Perform Ordinary Least Squares (OLS) Linear Regression
+     */
+    function trainModel() {
+      const n = dataset.length;
+      if (n === 0) {
+        model = { m: 0, c: 0, r2: 0, avgX: 0, avgY: 0, n: 0 };
+        return;
+      }
+      if (n === 1) {
+        model = { m: 0, c: dataset[0].y, r2: 1, avgX: dataset[0].x, avgY: dataset[0].y, n: 1 };
+        return;
+      }
+
+      // Calculate Means
+      let sumX = 0;
+      let sumY = 0;
+      for (let i = 0; i < n; i++) {
+        sumX += dataset[i].x;
+        sumY += dataset[i].y;
+      }
+      const avgX = sumX / n;
+      const avgY = sumY / n;
+
+      // Calculate Sum of Squares
+      let ssXX = 0;
+      let ssYY = 0;
+      let ssXY = 0;
+
+      for (let i = 0; i < n; i++) {
+        const diffX = dataset[i].x - avgX;
+        const diffY = dataset[i].y - avgY;
+        ssXX += diffX * diffX;
+        ssYY += diffY * diffY;
+        ssXY += diffX * diffY;
+      }
+
+      // Slope and Intercept
+      const m = ssXX === 0 ? 0 : ssXY / ssXX;
+      const c = avgY - m * avgX;
+
+      // Coefficient of Determination R^2
+      let r2 = 0;
+      if (ssXX * ssYY > 0) {
+        r2 = (ssXY * ssXY) / (ssXX * ssYY);
+      } else if (ssXX === 0 && ssYY === 0) {
+        r2 = 1;
+      }
+
+      model = { m, c, r2, avgX, avgY, n };
+    }
+
+    /**
+     * Formats a currency value to Indian Rupees style (₹x,xx,xxx.xx)
+     */
+    function formatCurrency(val) {
+      return new Intl.NumberFormat('en-IN', {
+        minimumFractionDigits: 2,
+        maximumFractionDigits: 2
+      }).format(val);
+    }
+
+    /**
+     * Predict salary for given years of experience
+     */
+    function predict(x) {
+      return model.m * x + model.c;
+    }
+
+    /**
+     * Animates predicted salary count changes smoothly
+     */
+    let animationFrameId = null;
+    function animateSalary(targetVal) {
+      if (animationFrameId) {
+        cancelAnimationFrame(animationFrameId);
+      }
+      
+      const element = predictedSalaryDisplay;
+      const cleanCurrentText = element.innerText.replace(/,/g, '');
+      const startVal = parseFloat(cleanCurrentText) || 0;
+      const duration = 200; // ms
+      const startTime = performance.now();
+
+      function updateNumber(now) {
+        const elapsed = now - startTime;
+        const progress = Math.min(elapsed / duration, 1);
+        
+        // Ease out quad
+        const easeProgress = progress * (2 - progress);
+        const currentVal = startVal + (targetVal - startVal) * easeProgress;
+        
+        element.innerText = formatCurrency(currentVal);
+        
+        if (progress < 1) {
+          animationFrameId = requestAnimationFrame(updateNumber);
+        } else {
+          element.innerText = formatCurrency(targetVal);
+        }
+      }
+      
+      animationFrameId = requestAnimationFrame(updateNumber);
+    }
+
+    /**
+     * Update stats and equation boxes in the DOM
+     */
+    function updateModelInsights() {
+      if (model.n === 0) {
+        formulaMath.innerHTML = `Salary = <span class="highlight">0.00</span> × Exp + <span class="highlight">0.00</span>`;
+        r2Display.innerText = "0.0000";
+        r2Desc.innerText = "No data points";
+        slopeDisplay.innerText = "₹0.00";
+        interceptDisplay.innerText = "₹0.00";
+        samplesDisplay.innerText = "0";
+        insightsText.innerHTML = `Please add some data points to train the model.`;
+        return;
+      }
+
+      // Equation display
+      const mSign = model.c >= 0 ? "+" : "-";
+      const absC = Math.abs(model.c);
+      formulaMath.innerHTML = `Salary = <span class="highlight">${model.m.toFixed(2)}</span> × Exp ${mSign} <span class="highlight">₹${absC.toFixed(2)}</span>`;
+
+      // Metrics
+      r2Display.innerText = model.r2.toFixed(4);
+      samplesDisplay.innerText = model.n;
+      slopeDisplay.innerText = `₹${formatCurrency(model.m)}`;
+      interceptDisplay.innerText = `₹${formatCurrency(model.c)}`;
+
+      // R^2 description
+      if (model.n < 3) {
+        r2Desc.innerText = "Insufficient sample count";
+      } else if (model.r2 > 0.95) {
+        r2Desc.innerText = "Excellent fit (Strong trend)";
+      } else if (model.r2 > 0.8) {
+        r2Desc.innerText = "Good fit (Solid correlation)";
+      } else if (model.r2 > 0.5) {
+        r2Desc.innerText = "Moderate fit";
+      } else {
+        r2Desc.innerText = "Weak fit (High noise/non-linear)";
+      }
+
+      // Dynamic Textual Summary
+      const avgXFormatted = model.avgX.toFixed(1);
+      const avgYFormatted = formatCurrency(model.avgY);
+
+      if (model.n >= 2) {
+        insightsText.innerHTML = `
+          On average, the dataset has <strong>${avgXFormatted} years</strong> of experience with a mean salary of <strong>₹${avgYFormatted}</strong>. 
+          For every additional year of experience, the predicted salary increases by <strong>₹${formatCurrency(model.m)}</strong>. 
+          An employee with zero experience is estimated to start with a base pay of <strong>₹${formatCurrency(model.c)}</strong>.
+        `;
+      } else {
+        insightsText.innerHTML = `
+          Model running on a single coordinate. Add more samples to calculate average growth rates and statistical correlation metrics.
+        `;
+      }
+    }
+
+    /**
+     * Re-populate the dataset table in the UI
+     */
+    function renderTable() {
+      tableBody.innerHTML = '';
+      
+      dataset.forEach((point, index) => {
+        const tr = document.createElement('tr');
+        
+        // Experience Cell
+        const tdX = document.createElement('td');
+        const inputX = document.createElement('input');
+        inputX.type = 'number';
+        inputX.step = '0.1';
+        inputX.min = '0';
+        inputX.max = '30';
+        inputX.value = point.x;
+        inputX.style.width = '100%';
+        inputX.style.border = 'none';
+        inputX.style.background = 'transparent';
+        inputX.style.fontFamily = 'inherit';
+        inputX.style.fontSize = 'inherit';
+        inputX.style.fontWeight = '500';
+        inputX.style.padding = '4px';
+        inputX.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          if (!isNaN(val) && val >= 0) {
+            dataset[index].x = val;
+            handleDataChange();
+          }
+        });
+        tdX.appendChild(inputX);
+        
+        // Salary Cell
+        const tdY = document.createElement('td');
+        const inputY = document.createElement('input');
+        inputY.type = 'number';
+        inputY.min = '0';
+        inputY.value = Math.round(point.y);
+        inputY.style.width = '100%';
+        inputY.style.border = 'none';
+        inputY.style.background = 'transparent';
+        inputY.style.fontFamily = 'inherit';
+        inputY.style.fontSize = 'inherit';
+        inputY.style.fontWeight = '500';
+        inputY.style.padding = '4px';
+        inputY.addEventListener('input', (e) => {
+          const val = parseFloat(e.target.value);
+          if (!isNaN(val) && val >= 0) {
+            dataset[index].y = val;
+            handleDataChange();
+          }
+        });
+        tdY.appendChild(inputY);
+
+        // Action Cell (Trash SVG)
+        const tdAction = document.createElement('td');
+        const btnDel = document.createElement('button');
+        btnDel.className = 'btn-delete';
+        btnDel.title = 'Delete point';
+        btnDel.innerHTML = `
+          <svg class="trash-icon-svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+            <line x1="10" y1="11" x2="10" y1="17"></line>
+            <line x1="14" y1="11" x2="14" y1="17"></line>
+          </svg>
+        `;
+        btnDel.addEventListener('click', () => {
+          dataset.splice(index, 1);
+          handleDataChange();
+          renderTable();
+        });
+        tdAction.appendChild(btnDel);
+
+        tr.appendChild(tdX);
+        tr.appendChild(tdY);
+        tr.appendChild(tdAction);
+        tableBody.appendChild(tr);
+      });
+    }
+
+    /**
+     * Handle data changes: retrain model, update stats, update prediction, redraw chart
+     */
+    function handleDataChange() {
+      trainModel();
+      updateModelInsights();
+      
+      const predY = predict(currentExpInput);
+      animateSalary(predY);
+      
+      predictionInfoText.innerHTML = `At ${currentExpInput.toFixed(1)} years of experience`;
+      
+      updateChart();
+    }
+
+    /**
+     * Set up the Chart.js visualization
+     */
+    function initChart() {
+      const ctx = document.getElementById('regressionChart').getContext('2d');
+      
+      // Configure default font
+      Chart.defaults.font.family = "'Outfit', sans-serif";
+      Chart.defaults.color = "#475569"; // Slate 600
+
+      chart = new Chart(ctx, {
+        type: 'scatter',
+        data: {
+          datasets: [
+            {
+              label: 'Prediction Guides',
+              data: getGuideLinesData(),
+              type: 'line',
+              borderColor: 'rgba(244, 63, 94, 0.45)', // Accent soft guide lines
+              borderWidth: 1.5,
+              borderDash: [5, 5],
+              fill: false,
+              pointRadius: 0,
+              order: 3,
+              tension: 0
+            },
+            {
+              label: 'Regression Line',
+              data: getLineData(),
+              type: 'line',
+              borderColor: '#6366f1', // Primary Indigo
+              borderWidth: 3.5,
+              fill: false,
+              pointRadius: 0,
+              order: 2,
+              tension: 0
+            },
+            {
+              label: 'Actual Dataset',
+              data: getScatterData(),
+              backgroundColor: '#0d9488', // Secondary Teal
+              borderColor: '#ffffff',
+              borderWidth: 2,
+              pointRadius: 7.5,
+              pointHoverRadius: 10,
+              order: 1
+            },
+            {
+              label: 'Current Prediction',
+              data: [getPredictionPoint()],
+              backgroundColor: '#f43f5e', // Accent Rose
+              borderColor: '#ffffff',
+              borderWidth: 3,
+              pointRadius: 10,
+              pointHoverRadius: 12,
+              order: 0
+            }
+          ]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          plugins: {
+            legend: {
+              position: 'top',
+              labels: {
+                usePointStyle: true,
+                boxWidth: 8,
+                font: {
+                  size: 12,
+                  weight: '600'
+                },
+                filter: function(item) {
+                  return item.text !== 'Prediction Guides';
+                }
+              }
+            },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.9)', // Slate 900
+              padding: 12,
+              cornerRadius: 8,
+              titleFont: {
+                size: 12,
+                weight: 'bold'
+              },
+              bodyFont: {
+                size: 12
+              },
+              filter: function(tooltipItem) {
+                return tooltipItem.datasetIndex !== 0;
+              },
+              callbacks: {
+                label: function(context) {
+                  const xVal = context.raw.x.toFixed(1);
+                  const yVal = formatCurrency(context.raw.y);
+                  if (context.datasetIndex === 3) {
+                    return `Prediction: ${xVal} Yrs → ₹${yVal}`;
+                  }
+                  if (context.datasetIndex === 1) {
+                    return `Trend: ${xVal} Yrs → ₹${yVal}`;
+                  }
+                  return `Actual Data: ${xVal} Yrs → ₹${yVal}`;
+                }
+              }
+            }
+          },
+          scales: {
+            x: {
+              title: {
+                display: true,
+                text: 'Experience (Years)',
+                font: {
+                  size: 13,
+                  weight: 'bold'
+                }
+              },
+              grid: {
+                color: 'rgba(148, 163, 184, 0.15)',
+                borderDash: [3, 3]
+              },
+              min: 0,
+              max: 15
+            },
+            y: {
+              title: {
+                display: true,
+                text: 'Salary (₹)',
+                font: {
+                  size: 13,
+                  weight: 'bold'
+                }
+              },
+              grid: {
+                color: 'rgba(148, 163, 184, 0.15)',
+                borderDash: [3, 3]
+              },
+              ticks: {
+                callback: function(value) {
+                  return '₹' + new Intl.NumberFormat('en-IN', { notation: 'compact' }).format(value);
+                }
+              }
+            }
+          }
+        }
+      });
+    }
+
+    function getScatterData() {
+      return dataset.map(p => ({ x: p.x, y: p.y }));
+    }
+
+    function getLineData() {
+      if (dataset.length === 0) return [];
+      
+      let maxXVal = 15;
+      dataset.forEach(p => {
+        if (p.x > maxXVal) maxXVal = Math.ceil(p.x + 2);
+      });
+      if (currentExpInput > maxXVal) {
+        maxXVal = Math.ceil(currentExpInput + 2);
+      }
+      
+      return [
+        { x: 0, y: predict(0) },
+        { x: maxXVal, y: predict(maxXVal) }
+      ];
+    }
+
+    function getPredictionPoint() {
+      return { x: currentExpInput, y: predict(currentExpInput) };
+    }
+
+    function getGuideLinesData() {
+      const predY = predict(currentExpInput);
+      return [
+        { x: currentExpInput, y: 0 },
+        { x: currentExpInput, y: predY },
+        { x: 0, y: predY }
+      ];
+    }
+
+    function updateChart() {
+      if (!chart) return;
+      
+      let maxXVal = 15;
+      dataset.forEach(p => {
+        if (p.x > maxXVal) maxXVal = Math.ceil(p.x + 2);
+      });
+      if (currentExpInput > maxXVal) {
+        maxXVal = Math.ceil(currentExpInput + 2);
+      }
+      
+      chart.options.scales.x.max = maxXVal;
+      
+      chart.data.datasets[0].data = getGuideLinesData();
+      chart.data.datasets[1].data = [
+        { x: 0, y: predict(0) },
+        { x: maxXVal, y: predict(maxXVal) }
+      ];
+      chart.data.datasets[2].data = getScatterData();
+      chart.data.datasets[3].data = [getPredictionPoint()];
+      
+      chart.update('none');
+    }
+
+    // -------------------------------------------------------------
+    // Interactive Controls & Dual-Binding Sync Logic
+    // -------------------------------------------------------------
+
+    // Slider dragging -> updates numeric input & predictions
+    expSlider.addEventListener('input', (e) => {
+      currentExpInput = parseFloat(e.target.value);
+      expNumericInput.value = currentExpInput.toFixed(1);
+      
+      const predY = predict(currentExpInput);
+      animateSalary(predY);
+      
+      predictionInfoText.innerHTML = `At ${currentExpInput.toFixed(1)} years of experience`;
+      
+      chart.data.datasets[0].data = getGuideLinesData();
+      chart.data.datasets[3].data = [getPredictionPoint()];
+      chart.update('none');
+    });
+
+    // Numeric input change -> updates slider & predictions
+    expNumericInput.addEventListener('input', (e) => {
+      let val = parseFloat(e.target.value);
+      
+      if (isNaN(val)) return;
+      if (val < 0) val = 0;
+      
+      currentExpInput = val;
+      
+      const currentSliderMax = parseFloat(expSlider.max);
+      if (val > currentSliderMax) {
+        expSlider.max = Math.ceil(val + 5);
+      }
+      
+      expSlider.value = val;
+      
+      const predY = predict(currentExpInput);
+      animateSalary(predY);
+      
+      predictionInfoText.innerHTML = `At ${currentExpInput.toFixed(1)} years of experience`;
+      
+      updateChart();
+    });
+
+    // Add point form submission
+    addDataForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      
+      const x = parseFloat(document.getElementById('new-exp').value);
+      const y = parseFloat(document.getElementById('new-salary').value);
+      
+      if (!isNaN(x) && !isNaN(y) && x >= 0 && y >= 0) {
+        dataset.push({ x, y });
+        dataset.sort((a, b) => a.x - b.x);
+        
+        handleDataChange();
+        renderTable();
+        
+        addDataForm.reset();
+      }
+    });
+
+    // Preset selector change
+    presetSelector.addEventListener('change', (e) => {
+      const selectedPreset = e.target.value;
+      if (PRESETS[selectedPreset]) {
+        dataset = JSON.parse(JSON.stringify(PRESETS[selectedPreset]));
+        
+        let maxExp = 15;
+        dataset.forEach(p => {
+          if (p.x > maxExp) maxExp = Math.ceil(p.x);
+        });
+        expSlider.max = maxExp;
+        
+        trainModel();
+        currentExpInput = Math.round(model.avgX * 10) / 10;
+        expSlider.value = currentExpInput;
+        expNumericInput.value = currentExpInput.toFixed(1);
+        
+        handleDataChange();
+        renderTable();
+      }
+    });
+
+    // Reset Slider button
+    btnReset.addEventListener('click', () => {
+      currentExpInput = 4.0;
+      expSlider.value = 4.0;
+      expNumericInput.value = '4.0';
+      handleDataChange();
+    });
+
+    // Use Mean Exp button
+    btnAverage.addEventListener('click', () => {
+      if (model.n > 0) {
+        currentExpInput = Math.round(model.avgX * 10) / 10;
+        expSlider.value = currentExpInput;
+        expNumericInput.value = currentExpInput.toFixed(1);
+        handleDataChange();
+      }
+    });
+
+    // Restore default button
+    btnRestoreDefaults.addEventListener('click', () => {
+      presetSelector.value = 'corporate';
+      dataset = JSON.parse(JSON.stringify(PRESETS.corporate));
+      currentExpInput = 4.0;
+      expSlider.value = 4.0;
+      expSlider.min = 0;
+      expSlider.max = 15;
+      expNumericInput.value = '4.0';
+      
+      handleDataChange();
+      renderTable();
+    });
+
+    // Initialize Page
+    window.addEventListener('DOMContentLoaded', () => {
+      trainModel();
+      renderTable();
+      initChart();
+      updateModelInsights();
+      
+      expSlider.value = currentExpInput;
+      expNumericInput.value = currentExpInput.toFixed(1);
+      
+      animateSalary(predict(currentExpInput));
+    });
+  </script>
+</body>
+</html>
